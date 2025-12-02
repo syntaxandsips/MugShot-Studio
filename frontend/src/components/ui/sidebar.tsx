@@ -89,7 +89,7 @@ const SidebarContent = ({ isCollapsed }: { isCollapsed: boolean }) => {
             <div className="px-3 mb-6 space-y-1">
                 <SidebarItem icon={Edit} label="New chat" isCollapsed={isCollapsed} />
                 <SidebarItem icon={Search} label="Search chats" isCollapsed={isCollapsed} />
-                <SidebarItem icon={Book} label="Library" isCollapsed={isCollapsed} />
+                <SidebarItem icon={Grid} label="Library" isCollapsed={isCollapsed} />
             </div>
 
             <div className="flex-1 overflow-y-auto px-3 space-y-1">
@@ -107,7 +107,9 @@ const SidebarContent = ({ isCollapsed }: { isCollapsed: boolean }) => {
                     {!isCollapsed && (
                         <div className="overflow-hidden">
                             <p className="text-sm font-medium truncate">User Account</p>
-                            <p className="text-xs text-gray-500 truncate">user@example.com</p>
+                            <button className="text-xs text-blue-500 hover:text-blue-700 font-medium mt-1">
+                                View Profile
+                            </button>
                         </div>
                     )}
                 </div>

@@ -13,11 +13,24 @@ import { Button } from '@/src/components/ui/button';
 import { Input } from '@/src/components/ui/input';
 import { AtSignIcon } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { Toast } from '@/src/components/ui/toast';
 
 type AuthModalProps = Omit<React.ComponentProps<typeof Modal>, 'children'>;
 
 export function AuthModal(props: AuthModalProps) {
     const router = useRouter();
+    const [toastVisible, setToastVisible] = React.useState(false);
+    const [toastMessage, setToastMessage] = React.useState('');
+    
+    const showComingSoonToast = () => {
+        setToastMessage('This feature will be available soon!');
+        setToastVisible(true);
+    };
+    
+    const hideToast = () => {
+        setToastVisible(false);
+    };
+    
     return (
         <Modal {...props}>
             <ModalContent
@@ -48,6 +61,7 @@ export function AuthModal(props: AuthModalProps) {
                         type="button"
                         variant="outline"
                         className="w-full duration-300 border-2 border-[#0f7d70] hover:bg-[#0f7d70] group h-12 rounded-lg"
+                        onClick={showComingSoonToast}
                     >
                         <GoogleIcon className="w-5 h-5 me-2 group-hover:text-white" />
                         <span className="group-hover:text-white font-medium">Continue With Google</span>
@@ -100,6 +114,11 @@ export function AuthModal(props: AuthModalProps) {
                     </p>
                 </ModalFooter>
             </ModalContent>
+            <Toast 
+                message={toastMessage} 
+                isVisible={toastVisible} 
+                onClose={hideToast} 
+            />
         </Modal>
     );
 }

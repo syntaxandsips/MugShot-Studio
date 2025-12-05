@@ -2,6 +2,7 @@ from pydantic_settings import BaseSettings
 from functools import lru_cache
 from typing import List, Union
 from pydantic import AnyHttpUrl, validator
+import json
 
 class Settings(BaseSettings):
     PROJECT_NAME: str = "Tmughsot studio"
@@ -15,6 +16,8 @@ class Settings(BaseSettings):
         if isinstance(v, str) and not v.startswith("["):
             return [i.strip() for i in v.split(",")]
         elif isinstance(v, (list, str)):
+            if isinstance(v, str) and v.startswith("["):
+                return json.loads(v)
             return v
         raise ValueError(v)
 

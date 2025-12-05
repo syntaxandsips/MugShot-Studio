@@ -6,263 +6,269 @@
   },
   "item": [
     {
-      "name": "Auth Start",
-      "id": "d62f5d40-a737-41b9-99a3-125251259d89",
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"email\": \"user@example.com\"\n}",
-          "options": {
-            "raw": {
-              "language": "json"
-            }
-          }
-        },
-        "url": {
-          "raw": "{{base_url}}/api/v1/auth/start",
-          "host": [
-            "{{base_url}}"
-          ],
-          "path": [
-            "api",
-            "v1",
-            "auth",
-            "start"
-          ]
-        },
-        "description": "Checks if a user exists and determines the next step (login or signup)."
-      }
-    },
-    {
-      "name": "Signup",
-      "id": "062084dd-587b-4809-a8e2-15c627317bdd",
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"securepassword123\",\n  \"confirm_password\": \"securepassword123\",\n  \"username\": \"cooluser123\",\n  \"full_name\": \"John Doe\",\n  \"dob\": \"1990-01-01\"\n}",
-          "options": {
-            "raw": {
-              "language": "json"
-            }
+      "name": "AUTH",
+      "item": [
+        {
+          "name": "Auth Start",
+          "id": "d62f5d40-a737-41b9-99a3-125251259d89",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/start",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "start"
+              ]
+            },
+            "description": "Checks if a user exists and determines the next step (login or signup)."
           }
         },
-        "url": {
-          "raw": "{{base_url}}/api/v1/auth/signup",
-          "host": [
-            "{{base_url}}"
-          ],
-          "path": [
-            "api",
-            "v1",
-            "auth",
-            "signup"
-          ]
-        },
-        "description": "Registers a new user account."
-      }
-    },
-    {
-      "name": "Confirm Email ( CS )",
-      "id": "3b853f5e-0abd-40b9-8da1-9597817df77d",
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "url": {
-          "raw": "{{base_url}}/api/v1/auth/confirm?token={{confirmation_token}}",
-          "host": [
-            "{{base_url}}"
-          ],
-          "path": [
-            "api",
-            "v1",
-            "auth",
-            "confirm"
-          ],
-          "query": [
-            {
-              "key": "token",
-              "value": "{{confirmation_token}}"
-            }
-          ]
-        },
-        "description": "Verifies the user's email address using the token received."
-      }
-    },
-    {
-      "name": "Signin",
-      "id": "9168d946-6a4a-420d-8659-bff913abba65",
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"securepassword123\"\n}",
-          "options": {
-            "raw": {
-              "language": "json"
-            }
+        {
+          "name": "Signup",
+          "id": "062084dd-587b-4809-a8e2-15c627317bdd",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"securepassword123\",\n  \"confirm_password\": \"securepassword123\",\n  \"username\": \"cooluser123\",\n  \"full_name\": \"John Doe\",\n  \"dob\": \"1990-01-01\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/signup",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "signup"
+              ]
+            },
+            "description": "Registers a new user account."
           }
         },
-        "url": {
-          "raw": "{{base_url}}/api/v1/auth/signin",
-          "host": [
-            "{{base_url}}"
-          ],
-          "path": [
-            "api",
-            "v1",
-            "auth",
-            "signin"
-          ]
-        },
-        "description": "Logs in the user and returns an access token."
-      }
-    },
-    {
-      "name": "Resend Confirmation",
-      "id": "821ee738-7df2-4f66-a47e-5e9e0ee815f7",
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"email\": \"user@example.com\"\n}",
-          "options": {
-            "raw": {
-              "language": "json"
-            }
+        {
+          "name": "Confirm Email ( CS )",
+          "id": "3b853f5e-0abd-40b9-8da1-9597817df77d",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/confirm?token={{confirmation_token}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "confirm"
+              ],
+              "query": [
+                {
+                  "key": "token",
+                  "value": "{{confirmation_token}}"
+                }
+              ]
+            },
+            "description": "Verifies the user's email address using the token received."
           }
         },
-        "url": {
-          "raw": "{{base_url}}/api/v1/auth/resend-confirmation",
-          "host": [
-            "{{base_url}}"
-          ],
-          "path": [
-            "api",
-            "v1",
-            "auth",
-            "resend-confirmation"
-          ]
-        },
-        "description": "Resends the email confirmation link."
-      }
-    },
-    {
-      "name": "Forgot Password",
-      "id": "8d2b9dcc-3342-45d9-bdd0-db7a99a36847",
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"email\": \"user@example.com\"\n}",
-          "options": {
-            "raw": {
-              "language": "json"
-            }
-          }
-        },
-        "url": {
-          "raw": "{{base_url}}/api/v1/auth/forgot-password",
-          "host": [
-            "{{base_url}}"
-          ],
-          "path": [
-            "api",
-            "v1",
-            "auth",
-            "forgot-password"
-          ]
-        },
-        "description": "Initiates the password reset flow."
-      }
-    },
-    {
-      "name": "Reset Password",
-      "id": "0d3e4b7e-884c-4548-9205-e352b9cbc163",
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"token\": \"{{reset_token}}\",\n  \"new_password\": \"newsecurepassword456\",\n  \"confirm_password\": \"newsecurepassword456\"\n}",
-          "options": {
-            "raw": {
-              "language": "json"
-            }
+        {
+          "name": "Signin",
+          "id": "9168d946-6a4a-420d-8659-bff913abba65",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"securepassword123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/signin",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "signin"
+              ]
+            },
+            "description": "Logs in the user and returns an access token."
           }
         },
-        "url": {
-          "raw": "{{base_url}}/api/v1/auth/reset-password",
-          "host": [
-            "{{base_url}}"
-          ],
-          "path": [
-            "api",
-            "v1",
-            "auth",
-            "reset-password"
-          ]
+        {
+          "name": "Resend Confirmation",
+          "id": "821ee738-7df2-4f66-a47e-5e9e0ee815f7",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/resend-confirmation",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "resend-confirmation"
+              ]
+            },
+            "description": "Resends the email confirmation link."
+          }
         },
-        "description": "Sets a new password using the reset token."
-      }
+        {
+          "name": "Forgot Password",
+          "id": "8d2b9dcc-3342-45d9-bdd0-db7a99a36847",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/forgot-password",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "forgot-password"
+              ]
+            },
+            "description": "Initiates the password reset flow."
+          }
+        },
+        {
+          "name": "Reset Password",
+          "id": "0d3e4b7e-884c-4548-9205-e352b9cbc163",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{reset_token}}\",\n  \"new_password\": \"newsecurepassword456\",\n  \"confirm_password\": \"newsecurepassword456\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/reset-password",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "reset-password"
+              ]
+            },
+            "description": "Sets a new password using the reset token."
+          }
+        }
+      ],
+      "id": "9b01739b-286b-4999-bd54-f0e40d020eea"
     }
   ],
   "variable": [
     {
-      "id": "1699bb3e-ff39-4fd9-9caf-30acd54b4154",
+      "id": "6aa8de42-702c-46ea-99fe-f543cb4d51ae",
       "key": "base_url",
       "value": "http://localhost:8000",
       "type": "string"
     },
     {
-      "id": "6455e01b-373c-4dfa-9e18-6c82ccdb5a84",
+      "id": "91dd9339-b25f-4102-a26e-d63420536db3",
       "key": "confirmation_token",
       "value": "",
       "type": "string"
     },
     {
-      "id": "2063940e-273c-416b-a4d9-8b117731e4af",
+      "id": "ca2ba821-b0c6-4154-94c6-bb342edeb4f6",
       "key": "reset_token",
       "value": "",
       "type": "string"

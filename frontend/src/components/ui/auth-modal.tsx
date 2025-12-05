@@ -29,9 +29,9 @@ export function AuthModal(props: AuthModalProps) {
                 }}
             >
                 <ModalHeader 
-                    className="bg-[#f0f9f8] rounded-t-xl"
+                    className="rounded-t-xl"
                     drawerProps={{
-                        className: "bg-[#f0f9f8] rounded-t-xl border-b border-[#0f7d70]"
+                        className: "rounded-t-xl border-b border-[#0f7d70]"
                     }}
                 >
                     <ModalTitle 
@@ -86,9 +86,9 @@ export function AuthModal(props: AuthModalProps) {
                     </Button>
                 </ModalBody>
                 <ModalFooter
-                    className="p-4 bg-[#f0f9f8] rounded-b-xl"
+                    className="p-4 rounded-b-xl"
                     drawerProps={{
-                        className: "p-4 bg-[#f0f9f8] rounded-b-xl border-t border-[#0f7d70]"
+                        className: "p-4 rounded-b-xl border-t border-[#0f7d70]"
                     }}
                 >
                     <p className="text-[#0f7d70] text-center text-xs">

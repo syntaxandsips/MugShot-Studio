@@ -1,3 +1,5 @@
+'use client';
+
 import { DotScreenShader } from "@/src/components/ui/dot-shader-background";
 import { Header } from "@/src/components/ui/header-2";
 import { HeroPill } from "@/src/components/ui/hero-pill";
@@ -9,8 +11,12 @@ import { InteractiveImageAccordion } from "@/src/components/ui/interactive-image
 import { PricingSection } from "@/src/components/ui/pricing-section";
 import { FAQSection } from "@/src/components/ui/faq-tabs";
 import StickyFooter from "@/src/components/ui/footer";
+import { AuthModal } from "@/src/components/ui/auth-modal";
+import React from "react";
 
 export default function Home() {
+  const [authOpen, setAuthOpen] = React.useState(false);
+  
   return (
     <div className="min-h-screen w-full flex flex-col relative bg-white overflow-x-hidden">
       <Header />
@@ -43,6 +49,7 @@ export default function Home() {
                 <button
                   className="px-6 py-3 rounded-lg"
                   style={{ backgroundColor: '#0f7d70', color: 'white' }}
+                  onClick={() => setAuthOpen(true)}
                 >
                   Get Started
                 </button>
@@ -90,6 +97,7 @@ export default function Home() {
         </div>
         <StickyFooter />
       </main>
+      <AuthModal open={authOpen} onOpenChange={setAuthOpen} />
     </div>
   );
 }

@@ -1,12 +1,14 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from app.core.security import get_current_user
 from app.db.supabase import get_supabase
 from app.utils.credit_calculator import calculate_job_credits, get_model_info
 from app.utils.exceptions import handle_exception, InsufficientCreditsException
 from pydantic import BaseModel
 from typing import Optional
-from app.worker import generate_thumbnail_task
-import uuid
+from app.services.background_tasks import process_thumbnail_job_sync
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -31,6 +33,7 @@ class JobStatusResponse(BaseModel):
 @router.post("/", response_model=JobResponse)
 async def create_job(
     job_in: JobCreate,
+    background_tasks: BackgroundTasks,
     user: dict = Depends(get_current_user)
 ):
     supabase = get_supabase()
@@ -82,8 +85,9 @@ async def create_job(
         res = supabase.table("jobs").insert(job_data).execute()
         job = res.data[0]
         
-        # Trigger Celery Task
-        task = generate_thumbnail_task.delay(job["id"])
+        # Trigger background task (replaces Celery)
+        logger.info(f"Queueing background task for job {job['id']}")
+        background_tasks.add_task(process_thumbnail_job_sync, job["id"])
         
         return JobResponse(
             id=job["id"], 

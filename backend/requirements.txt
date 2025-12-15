@@ -1,21 +1,27 @@
+# Core Framework
 fastapi
 uvicorn[standard]
 pydantic-settings
-sqlalchemy
-asyncpg
-redis
-celery
-boto3
-httpx
-pillow
-opencv-python
 python-dotenv
-supabase
-google-generativeai
 python-multipart
-fal-client
+
+# Database & Storage
+supabase
+httpx
+
+# Auth
 python-jose[cryptography]
 passlib[bcrypt]
-pytest
-httpx
+
+# AI Providers
+google-generativeai
+fal-client
+
+# Upstash Redis (Serverless-compatible)
+upstash-redis
+
+# Monitoring & Logging
 sentry-sdk
+
+# Testing (dev only)
+pytest

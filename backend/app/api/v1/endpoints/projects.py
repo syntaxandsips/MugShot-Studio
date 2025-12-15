@@ -1,12 +1,15 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from app.core.security import get_current_user
 from app.db.supabase import get_supabase
 from app.utils.exceptions import handle_exception, InsufficientCreditsException
 from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
-from app.worker import generate_thumbnail_task
+from app.services.background_tasks import process_thumbnail_job_sync
 from app.utils.credit_calculator import calculate_job_credits
 from app.core.ratelimit import RateLimiter
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -181,6 +184,7 @@ async def update_project(
 async def queue_generation(
     project_id: str,
     job_in: JobQueueRequest,
+    background_tasks: BackgroundTasks,
     user: dict = Depends(get_current_user)
 ):
     supabase = get_supabase()
@@ -244,8 +248,9 @@ async def queue_generation(
         res = supabase.table("jobs").insert(new_job_data).execute()
         job = res.data[0]
         
-        # Trigger Celery Task
-        generate_thumbnail_task.delay(job["id"])
+        # Trigger background task (replaces Celery)
+        logger.info(f"Queueing background task for job {job['id']}")
+        background_tasks.add_task(process_thumbnail_job_sync, job["id"])
         
         # Update user credits
         supabase.table("users").update({"credits": current_credits - credits_needed}).eq("id", user_id).execute()

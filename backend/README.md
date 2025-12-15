@@ -2,6 +2,13 @@
 
 FastAPI backend for MugShot Studio, handling authentication, image generation jobs, and chat sessions.
 
+## Features
+
+- **Serverless-Ready**: Optimized for deployment on Vercel, AWS Lambda, and other serverless platforms
+- **Upstash Redis**: Uses Upstash Redis REST API for rate limiting and token storage (serverless-compatible)
+- **Background Tasks**: Uses FastAPI's BackgroundTasks instead of Celery for job processing
+- **Multi-Provider AI**: Supports Gemini, ByteDance Seedream, and Fal.ai for image generation
+
 ## Setup
 
 1.  **Environment Variables**:
@@ -14,7 +21,7 @@ FastAPI backend for MugShot Studio, handling authentication, image generation jo
     - `PROFILE_PHOTOS_BUCKET`, `USER_ASSETS_BUCKET`, `RENDERS_BUCKET` (optional, defaults provided)
     - `JWT_SECRET` (Generate a secure random string)
     - `GEMINI_API_KEY`, `BYTEDANCE_API_KEY`, `FAL_KEY`
-    - `REDIS_URL`
+    - `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` (from Upstash Console)
 
     To generate a secure JWT secret, you can use:
     ```bash
@@ -77,22 +84,41 @@ FastAPI backend for MugShot Studio, handling authentication, image generation jo
 
 ## Running Locally
 
-### Using Docker Compose (Recommended)
+### Quick Start (Recommended)
+```bash
+pip install -r requirements.txt
+python -m uvicorn app.main:app --reload
+```
+The API will start on port 8000. Background tasks run in the same process.
+
+### Using Docker Compose
 ```bash
 docker-compose up --build
 ```
-This starts the API (port 8000), Redis, Celery Worker, and Flower.
+This starts the API on port 8000.
 
-### Manual Run
-1.  Start Redis.
-2.  Start API:
-    ```bash
-    uvicorn app.main:app --reload
-    ```
-3.  Start Celery Worker:
-    ```bash
-    celery -A app.worker.celery_app worker --loglevel=info
-    ```
+## Deployment
+
+### Vercel (Serverless)
+1. Install Vercel CLI: `npm i -g vercel`
+2. Configure environment variables in Vercel dashboard
+3. Deploy: `vercel --prod`
+
+The `vercel.json` configuration is already set up for Python serverless functions.
+
+### Traditional Server
+For traditional server deployments, you can still use uvicorn:
+```bash
+python -m uvicorn app.main:app --host 0.0.0.0 --port 8000
+```
+
+## Upstash Redis Setup
+
+1. Create a free Redis database at [console.upstash.com](https://console.upstash.com)
+2. Copy the REST API credentials:
+   - `UPSTASH_REDIS_REST_URL`
+   - `UPSTASH_REDIS_REST_TOKEN`
+3. Add them to your environment variables
 
 ## Testing
 
@@ -102,7 +128,7 @@ pytest
 
 ## API Documentation
 
-Once running, visit `http://localhost:8000/docs` for Swagger UI.
+Once running, visit `http://localhost:8000/api/v1/docs` for Swagger UI.
 
 ## API Endpoints
 
@@ -353,8 +379,18 @@ Send a message to a chat.
 
 ## Project Structure
 
-- `app/core`: Configuration and Auth logic.
-- `app/api/v1/endpoints`: API Routes (Auth, Assets, Chat, Jobs, Projects).
-- `app/services`: Provider integrations (Gemini, Bytedance, Fal).
-- `app/worker.py`: Celery task definitions.
+- `app/core`: Configuration, auth logic, Redis integration, and rate limiting.
+- `app/api/v1/endpoints`: API Routes (Auth, Assets, Chat, Jobs, Projects, Profile).
+- `app/services`: Provider integrations (Gemini, ByteDance, Fal) and background task processing.
+- `app/services/background_tasks.py`: Async job processor for thumbnail generation.
 - `migrations`: SQL migration files.
+
+## Architecture Notes
+
+### Serverless Compatibility
+- Uses Upstash Redis REST API instead of traditional Redis (no persistent connections needed)
+- Uses FastAPI BackgroundTasks instead of Celery (no separate worker process)
+- Optimized dependencies to keep deployment package under 250MB
+
+### Rate Limiting
+Rate limiting uses Upstash Redis with a fail-open policy. If Redis is unavailable, requests are allowed through to prevent service disruption.

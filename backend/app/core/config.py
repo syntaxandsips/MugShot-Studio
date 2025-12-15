@@ -37,8 +37,9 @@ class Settings(BaseSettings):
     FAL_KEY: str
     IMAGEROUTER_API_KEY: Union[str, None] = None
 
-    # Redis/Celery
-    REDIS_URL: str = "redis://localhost:6379/0"
+    # Upstash Redis (Serverless-compatible)
+    UPSTASH_REDIS_REST_URL: Union[str, None] = None
+    UPSTASH_REDIS_REST_TOKEN: Union[str, None] = None
     
     # Sentry
     SENTRY_DSN: Union[str, None] = None

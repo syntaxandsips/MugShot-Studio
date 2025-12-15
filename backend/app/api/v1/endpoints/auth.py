@@ -6,7 +6,10 @@ from app.core.redis import get_redis
 from app.core.ratelimit import RateLimiter
 from datetime import date
 import secrets
-from redis.asyncio import Redis
+from typing import Any
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -49,7 +52,7 @@ async def auth_start(payload: AuthStart):
     return {"exists": False, "next": "create_account"}
 
 @router.post("/signup", status_code=status.HTTP_201_CREATED, dependencies=[Depends(RateLimiter(times=3, seconds=60))])
-async def signup(payload: UserSignup, background_tasks: BackgroundTasks, redis: Redis = Depends(get_redis)):
+async def signup(payload: UserSignup, background_tasks: BackgroundTasks, redis: Any = Depends(get_redis)):
     if payload.password != payload.confirm_password:
         raise HTTPException(status_code=400, detail="Passwords do not match")
     
@@ -120,7 +123,7 @@ async def signin(payload: UserSignin):
     return {"access_token": access_token, "token_type": "bearer", "user": user}
 
 @router.post("/confirm")
-async def confirm_email(token: str, redis: Redis = Depends(get_redis)):
+async def confirm_email(token: str, redis: Any = Depends(get_redis)):
     user_id = await redis.get(f"confirm_email:{token}")
     if not user_id:
         raise HTTPException(status_code=400, detail="Invalid or expired token")
@@ -132,7 +135,7 @@ async def confirm_email(token: str, redis: Redis = Depends(get_redis)):
     return {"message": "Email confirmed successfully"}
 
 @router.post("/resend-confirmation", dependencies=[Depends(RateLimiter(times=3, seconds=60))])
-async def resend_confirmation(payload: ResendConfirmation, redis: Redis = Depends(get_redis)):
+async def resend_confirmation(payload: ResendConfirmation, redis: Any = Depends(get_redis)):
     supabase = get_supabase()
     response = supabase.table("users").select("id, email_confirmed").eq("email", payload.email).execute()
     
@@ -151,7 +154,7 @@ async def resend_confirmation(payload: ResendConfirmation, redis: Redis = Depend
     return {"message": "If account exists, confirmation email sent"}
 
 @router.post("/forgot-password", dependencies=[Depends(RateLimiter(times=3, seconds=60))])
-async def forgot_password(payload: ForgotPassword, redis: Redis = Depends(get_redis)):
+async def forgot_password(payload: ForgotPassword, redis: Any = Depends(get_redis)):
     supabase = get_supabase()
     response = supabase.table("users").select("id").eq("email", payload.email).execute()
     
@@ -164,7 +167,7 @@ async def forgot_password(payload: ForgotPassword, redis: Redis = Depends(get_re
     return {"message": "If account exists, reset instructions sent"}
 
 @router.post("/reset-password")
-async def reset_password(payload: ResetPassword, redis: Redis = Depends(get_redis)):
+async def reset_password(payload: ResetPassword, redis: Any = Depends(get_redis)):
     if payload.new_password != payload.confirm_password:
         raise HTTPException(status_code=400, detail="Passwords do not match")
         

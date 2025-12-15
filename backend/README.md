@@ -87,7 +87,7 @@ FastAPI backend for MugShot Studio, handling authentication, image generation jo
 ### Quick Start (Recommended)
 ```bash
 pip install -r requirements.txt
-python -m uvicorn app.main:app --reload
+python -m uvicorn main:app --reload
 ```
 The API will start on port 8000. Background tasks run in the same process.
 

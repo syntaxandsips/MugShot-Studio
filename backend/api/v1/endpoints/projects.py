@@ -1,12 +1,13 @@
-from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
-from core.security import get_current_user
+from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, Query
+from core.security import get_current_user, get_current_user_optional
 from db.supabase import get_supabase
 from utils.credit_calculator import calculate_job_credits, get_model_info
 from utils.exceptions import handle_exception, InsufficientCreditsException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Optional, List, Dict, Any
 from services.background_tasks import process_thumbnail_job_sync
 from core.ratelimit import RateLimiter
+from core.storage import StorageConfig
 import logging
 
 logger = logging.getLogger(__name__)
@@ -24,6 +25,11 @@ class ProjectCreate(BaseModel):
     model_pref: Optional[str] = "nano_banana"  # Default to Nano Banana
     refs: Optional[List[str]] = []  # List of asset IDs
     copy_target: Optional[str] = None  # Asset ID
+    # New visibility fields
+    title: Optional[str] = None
+    description: Optional[str] = None
+    visibility: str = "private"  # public, private, unlisted
+    tags: Optional[List[str]] = []
 
 class ProjectUpdate(BaseModel):
     mode: Optional[str] = None
@@ -36,6 +42,11 @@ class ProjectUpdate(BaseModel):
     model_pref: Optional[str] = None
     refs: Optional[List[str]] = None
     copy_target: Optional[str] = None
+    # New visibility fields
+    title: Optional[str] = None
+    description: Optional[str] = None
+    visibility: Optional[str] = None
+    tags: Optional[List[str]] = None
 
 class ProjectResponse(BaseModel):
     id: str
@@ -44,6 +55,31 @@ class ProjectResponse(BaseModel):
     platform: str
     width: int
     height: int
+    # New fields
+    title: Optional[str] = None
+    description: Optional[str] = None
+    visibility: str = "private"
+    tags: List[str] = []
+    thumbnail_url: Optional[str] = None
+    likes_count: int = 0
+    views_count: int = 0
+    is_featured: bool = False
+    created_at: Optional[str] = None
+    updated_at: Optional[str] = None
+    owner_id: Optional[str] = None
+    owner_username: Optional[str] = None
+
+
+class ProjectVisibilityUpdate(BaseModel):
+    visibility: str = Field(..., pattern="^(public|private|unlisted)$")
+
+
+class PaginatedProjectList(BaseModel):
+    projects: List[ProjectResponse]
+    total: int
+    page: int
+    limit: int
+    has_more: bool
 
 class JobQueueRequest(BaseModel):
     quality: str = "std"
@@ -272,3 +308,413 @@ async def queue_generation(
 
     except Exception as e:
         raise handle_exception(e)
+
+
+def get_project_thumbnail_url(supabase, project_id: str) -> Optional[str]:
+    """Get the first render thumbnail URL for a project."""
+    try:
+        # Get the latest job for this project
+        job_res = supabase.table("jobs").select("id").eq("project_id", project_id).eq("status", "succeeded").order("finished_at", desc=True).limit(1).execute()
+        if not job_res.data:
+            return None
+        
+        # Get the first render for this job
+        render_res = supabase.table("renders").select("asset_id").eq("job_id", job_res.data[0]["id"]).limit(1).execute()
+        if not render_res.data:
+            return None
+        
+        # Get the asset storage path
+        asset_res = supabase.table("assets").select("storage_path").eq("id", render_res.data[0]["asset_id"]).execute()
+        if not asset_res.data:
+            return None
+        
+        path = asset_res.data[0]["storage_path"]
+        return supabase.storage.from_(StorageConfig.RENDERS_BUCKET).get_public_url(path)
+    except:
+        return None
+
+
+def build_project_response(supabase, project: dict, include_owner: bool = False) -> ProjectResponse:
+    """Build a ProjectResponse from a project dict."""
+    thumbnail_url = get_project_thumbnail_url(supabase, project["id"])
+    
+    owner_username = None
+    if include_owner:
+        try:
+            user_res = supabase.table("users").select("username").eq("id", project["user_id"]).execute()
+            if user_res.data:
+                owner_username = user_res.data[0]["username"]
+        except:
+            pass
+    
+    tags = project.get("tags", [])
+    if isinstance(tags, str):
+        import json
+        try:
+            tags = json.loads(tags)
+        except:
+            tags = []
+    
+    return ProjectResponse(
+        id=project["id"],
+        status=project["status"],
+        mode=project["mode"],
+        platform=project["platform"],
+        width=project["width"],
+        height=project["height"],
+        title=project.get("title"),
+        description=project.get("description"),
+        visibility=project.get("visibility", "private"),
+        tags=tags or [],
+        thumbnail_url=thumbnail_url,
+        likes_count=project.get("likes_count", 0),
+        views_count=project.get("views_count", 0),
+        is_featured=project.get("is_featured", False),
+        created_at=project.get("created_at"),
+        updated_at=project.get("updated_at"),
+        owner_id=project.get("user_id"),
+        owner_username=owner_username
+    )
+
+
+@router.patch("/{project_id}/visibility")
+async def update_project_visibility(
+    project_id: str,
+    update: ProjectVisibilityUpdate,
+    user: dict = Depends(get_current_user)
+):
+    """
+    Update project visibility (public, private, unlisted).
+    """
+    supabase = get_supabase()
+    
+    try:
+        # Verify ownership
+        proj_res = supabase.table("projects").select("*").eq("id", project_id).eq("user_id", user["id"]).execute()
+        if not proj_res.data:
+            raise HTTPException(status_code=404, detail="Project not found")
+        
+        # Update visibility
+        supabase.table("projects").update({"visibility": update.visibility}).eq("id", project_id).execute()
+        
+        return {"message": f"Project visibility updated to {update.visibility}", "visibility": update.visibility}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise handle_exception(e)
+
+
+@router.get("/gallery/featured", response_model=PaginatedProjectList)
+async def get_featured_gallery(
+    page: int = Query(1, ge=1),
+    limit: int = Query(20, ge=1, le=100)
+):
+    """
+    Get featured public projects.
+    """
+    supabase = get_supabase()
+    offset = (page - 1) * limit
+    
+    try:
+        # Get total count
+        count_res = supabase.table("projects").select("id", count="exact").eq("visibility", "public").eq("is_featured", True).execute()
+        total = count_res.count or 0
+        
+        # Get featured projects
+        projects_res = supabase.table("projects").select("*").eq("visibility", "public").eq("is_featured", True).order("created_at", desc=True).range(offset, offset + limit - 1).execute()
+        
+        projects = [build_project_response(supabase, p, include_owner=True) for p in projects_res.data]
+        
+        return PaginatedProjectList(
+            projects=projects,
+            total=total,
+            page=page,
+            limit=limit,
+            has_more=(offset + limit) < total
+        )
+        
+    except Exception as e:
+        logger.error(f"Error getting featured gallery: {str(e)}")
+        return PaginatedProjectList(projects=[], total=0, page=page, limit=limit, has_more=False)
+
+
+@router.get("/gallery/trending", response_model=PaginatedProjectList)
+async def get_trending_gallery(
+    page: int = Query(1, ge=1),
+    limit: int = Query(20, ge=1, le=100)
+):
+    """
+    Get trending public projects (ordered by views/likes).
+    """
+    supabase = get_supabase()
+    offset = (page - 1) * limit
+    
+    try:
+        # Get total count
+        count_res = supabase.table("projects").select("id", count="exact").eq("visibility", "public").execute()
+        total = count_res.count or 0
+        
+        # Get trending projects (ordered by views_count desc, then likes_count desc)
+        projects_res = supabase.table("projects").select("*").eq("visibility", "public").order("views_count", desc=True).order("likes_count", desc=True).range(offset, offset + limit - 1).execute()
+        
+        projects = [build_project_response(supabase, p, include_owner=True) for p in projects_res.data]
+        
+        return PaginatedProjectList(
+            projects=projects,
+            total=total,
+            page=page,
+            limit=limit,
+            has_more=(offset + limit) < total
+        )
+        
+    except Exception as e:
+        logger.error(f"Error getting trending gallery: {str(e)}")
+        return PaginatedProjectList(projects=[], total=0, page=page, limit=limit, has_more=False)
+
+
+@router.get("/gallery/recent", response_model=PaginatedProjectList)
+async def get_recent_gallery(
+    page: int = Query(1, ge=1),
+    limit: int = Query(20, ge=1, le=100)
+):
+    """
+    Get recent public projects.
+    """
+    supabase = get_supabase()
+    offset = (page - 1) * limit
+    
+    try:
+        # Get total count
+        count_res = supabase.table("projects").select("id", count="exact").eq("visibility", "public").execute()
+        total = count_res.count or 0
+        
+        # Get recent projects
+        projects_res = supabase.table("projects").select("*").eq("visibility", "public").order("created_at", desc=True).range(offset, offset + limit - 1).execute()
+        
+        projects = [build_project_response(supabase, p, include_owner=True) for p in projects_res.data]
+        
+        return PaginatedProjectList(
+            projects=projects,
+            total=total,
+            page=page,
+            limit=limit,
+            has_more=(offset + limit) < total
+        )
+        
+    except Exception as e:
+        logger.error(f"Error getting recent gallery: {str(e)}")
+        return PaginatedProjectList(projects=[], total=0, page=page, limit=limit, has_more=False)
+
+
+@router.get("/user/{user_id}/public", response_model=PaginatedProjectList)
+async def get_user_public_projects(
+    user_id: str,
+    page: int = Query(1, ge=1),
+    limit: int = Query(20, ge=1, le=100),
+    current_user: Optional[dict] = Depends(get_current_user_optional)
+):
+    """
+    Get a user's public projects.
+    """
+    supabase = get_supabase()
+    offset = (page - 1) * limit
+    
+    try:
+        # Check if requesting own projects (show all) or others (show public only)
+        visibility_filter = "public"
+        if current_user and current_user["id"] == user_id:
+            # Show all projects for the owner
+            visibility_filter = None
+        
+        # Build query
+        query = supabase.table("projects").select("*", count="exact").eq("user_id", user_id)
+        if visibility_filter:
+            query = query.eq("visibility", visibility_filter)
+        
+        count_res = query.execute()
+        total = count_res.count or 0
+        
+        # Get projects
+        query = supabase.table("projects").select("*").eq("user_id", user_id)
+        if visibility_filter:
+            query = query.eq("visibility", visibility_filter)
+        
+        projects_res = query.order("created_at", desc=True).range(offset, offset + limit - 1).execute()
+        
+        projects = [build_project_response(supabase, p, include_owner=True) for p in projects_res.data]
+        
+        return PaginatedProjectList(
+            projects=projects,
+            total=total,
+            page=page,
+            limit=limit,
+            has_more=(offset + limit) < total
+        )
+        
+    except Exception as e:
+        logger.error(f"Error getting user projects: {str(e)}")
+        return PaginatedProjectList(projects=[], total=0, page=page, limit=limit, has_more=False)
+
+
+@router.post("/{project_id}/like")
+async def like_project(project_id: str, user: dict = Depends(get_current_user)):
+    """
+    Like a project.
+    """
+    supabase = get_supabase()
+    
+    try:
+        # Check if project exists and is public
+        proj_res = supabase.table("projects").select("id, user_id, visibility, likes_count").eq("id", project_id).execute()
+        if not proj_res.data:
+            raise HTTPException(status_code=404, detail="Project not found")
+        
+        project = proj_res.data[0]
+        
+        # Can only like public projects (or your own)
+        if project["visibility"] != "public" and project["user_id"] != user["id"]:
+            raise HTTPException(status_code=403, detail="Cannot like private projects")
+        
+        # Check if already liked
+        existing = supabase.table("project_likes").select("id").eq("project_id", project_id).eq("user_id", user["id"]).execute()
+        if existing.data:
+            raise HTTPException(status_code=400, detail="Already liked this project")
+        
+        # Add like
+        supabase.table("project_likes").insert({
+            "project_id": project_id,
+            "user_id": user["id"]
+        }).execute()
+        
+        # Increment likes count
+        new_count = (project.get("likes_count") or 0) + 1
+        supabase.table("projects").update({"likes_count": new_count}).eq("id", project_id).execute()
+        
+        return {"message": "Project liked", "liked": True, "likes_count": new_count}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error liking project: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to like project")
+
+
+@router.delete("/{project_id}/like")
+async def unlike_project(project_id: str, user: dict = Depends(get_current_user)):
+    """
+    Unlike a project.
+    """
+    supabase = get_supabase()
+    
+    try:
+        # Check if project exists
+        proj_res = supabase.table("projects").select("id, likes_count").eq("id", project_id).execute()
+        if not proj_res.data:
+            raise HTTPException(status_code=404, detail="Project not found")
+        
+        project = proj_res.data[0]
+        
+        # Remove like
+        supabase.table("project_likes").delete().eq("project_id", project_id).eq("user_id", user["id"]).execute()
+        
+        # Decrement likes count
+        new_count = max(0, (project.get("likes_count") or 0) - 1)
+        supabase.table("projects").update({"likes_count": new_count}).eq("id", project_id).execute()
+        
+        return {"message": "Project unliked", "liked": False, "likes_count": new_count}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error unliking project: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to unlike project")
+
+
+@router.get("/{project_id}/is-liked")
+async def check_project_liked(project_id: str, user: dict = Depends(get_current_user)):
+    """
+    Check if user has liked a project.
+    """
+    supabase = get_supabase()
+    
+    try:
+        existing = supabase.table("project_likes").select("id").eq("project_id", project_id).eq("user_id", user["id"]).execute()
+        return {"is_liked": len(existing.data) > 0}
+        
+    except Exception as e:
+        logger.error(f"Error checking like status: {str(e)}")
+        return {"is_liked": False}
+
+
+@router.post("/{project_id}/view")
+async def record_project_view(
+    project_id: str,
+    user: Optional[dict] = Depends(get_current_user_optional)
+):
+    """
+    Record a view on a project.
+    Increments view count for public/unlisted projects.
+    """
+    supabase = get_supabase()
+    
+    try:
+        # Get project
+        proj_res = supabase.table("projects").select("id, user_id, visibility, views_count").eq("id", project_id).execute()
+        if not proj_res.data:
+            return {"success": False}
+        
+        project = proj_res.data[0]
+        
+        # Only count views for public/unlisted projects
+        if project["visibility"] == "private":
+            # Check if user is owner
+            if not user or project["user_id"] != user["id"]:
+                return {"success": False}
+        
+        # Don't count owner's own views
+        if user and project["user_id"] == user["id"]:
+            return {"success": True, "views_count": project.get("views_count", 0)}
+        
+        # Increment view count
+        new_count = (project.get("views_count") or 0) + 1
+        supabase.table("projects").update({"views_count": new_count}).eq("id", project_id).execute()
+        
+        return {"success": True, "views_count": new_count}
+        
+    except Exception as e:
+        logger.error(f"Error recording view: {str(e)}")
+        return {"success": False}
+
+
+@router.get("/public/{project_id}", response_model=ProjectResponse)
+async def get_public_project(
+    project_id: str,
+    user: Optional[dict] = Depends(get_current_user_optional)
+):
+    """
+    Get a public project by ID.
+    Also works for unlisted projects if the link is known.
+    """
+    supabase = get_supabase()
+    
+    try:
+        proj_res = supabase.table("projects").select("*").eq("id", project_id).execute()
+        if not proj_res.data:
+            raise HTTPException(status_code=404, detail="Project not found")
+        
+        project = proj_res.data[0]
+        
+        # Check visibility
+        if project["visibility"] == "private":
+            # Only owner can view private projects
+            if not user or project["user_id"] != user["id"]:
+                raise HTTPException(status_code=404, detail="Project not found")
+        
+        return build_project_response(supabase, project, include_owner=True)
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting public project: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to get project")

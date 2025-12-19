@@ -14,7 +14,7 @@ import os
 # Import settings and routers
 from core.config import settings
 from core.logging import setup_logging
-from api.v1.endpoints import projects, jobs, assets, auth, chat, profile
+from api.v1.endpoints import projects, jobs, assets, auth, chat, profile, preferences, users, billing, referral, export, support
 
 # Setup logging
 setup_logging()
@@ -44,6 +44,12 @@ app.include_router(jobs.router, prefix=f"{settings.API_V1_STR}/jobs", tags=["job
 app.include_router(assets.router, prefix=f"{settings.API_V1_STR}/assets", tags=["assets"])
 app.include_router(chat.router, prefix=f"{settings.API_V1_STR}/chat", tags=["chat"])
 app.include_router(profile.router, prefix=f"{settings.API_V1_STR}/profile", tags=["profile"])
+app.include_router(preferences.router, prefix=f"{settings.API_V1_STR}/profile/preferences", tags=["preferences"])
+app.include_router(users.router, prefix=f"{settings.API_V1_STR}/users", tags=["users"])
+app.include_router(billing.router, prefix=f"{settings.API_V1_STR}/billing", tags=["billing"])
+app.include_router(referral.router, prefix=f"{settings.API_V1_STR}/referral", tags=["referral"])
+app.include_router(export.router, prefix=f"{settings.API_V1_STR}/export", tags=["export"])
+app.include_router(support.router, prefix=f"{settings.API_V1_STR}/support", tags=["support"])
 
 
 def get_landing_page_html() -> str:

@@ -36,21 +36,49 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
     return encoded_jwt
 
 async def get_current_user(token: str = Depends(oauth2_scheme)):
+    """
+    Validate JWT token and return current user.
+    Works with both Supabase Auth tokens and local tokens.
+    """
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
-        payload = jwt.decode(token, settings.JWT_SECRET, algorithms=[ALGORITHM])
+        # Try to decode with local JWT secret
+        payload = jwt.decode(token, settings.JWT_SECRET, algorithms=[ALGORITHM], options={"verify_aud": False})
         user_id: str = payload.get("sub")
         if user_id is None:
             raise credentials_exception
-    except JWTError:
+    except JWTError as e:
+        logger.warning(f"JWT decode error: {str(e)}")
         raise credentials_exception
     
     supabase = get_supabase()
     response = supabase.table("users").select("*").eq("id", user_id).execute()
     if not response.data:
         raise credentials_exception
+    return response.data[0]
+
+
+async def get_current_user_optional(token: str = Depends(OAuth2PasswordBearer(tokenUrl=f"{settings.API_V1_STR}/auth/signin", auto_error=False))):
+    """
+    Optional authentication - returns None if no valid token.
+    """
+    if not token:
+        return None
+    
+    try:
+        payload = jwt.decode(token, settings.JWT_SECRET, algorithms=[ALGORITHM], options={"verify_aud": False})
+        user_id: str = payload.get("sub")
+        if user_id is None:
+            return None
+    except JWTError:
+        return None
+    
+    supabase = get_supabase()
+    response = supabase.table("users").select("*").eq("id", user_id).execute()
+    if not response.data:
+        return None
     return response.data[0]

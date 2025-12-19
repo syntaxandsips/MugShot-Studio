@@ -13,6 +13,9 @@ class ProfileUpdate(BaseModel):
     full_name: Optional[str] = None
     username: Optional[str] = Field(None, min_length=3, max_length=30, pattern="^[a-zA-Z0-9._-]+$")
     dob: Optional[date] = None
+    bio: Optional[str] = Field(None, max_length=150)
+    website_url: Optional[str] = None
+    is_public: Optional[bool] = None
 
 class ProfileResponse(BaseModel):
     id: str
@@ -24,6 +27,14 @@ class ProfileResponse(BaseModel):
     plan: str
     credits: int
     created_at: str
+    # New fields
+    bio: Optional[str] = None
+    website_url: Optional[str] = None
+    is_public: bool = True
+    is_verified: bool = False
+    followers_count: int = 0
+    following_count: int = 0
+    thumbnails_count: int = 0
 
 @router.get("/", response_model=ProfileResponse)
 async def get_profile(user: dict = Depends(get_current_user)):
@@ -45,14 +56,29 @@ async def get_profile(user: dict = Depends(get_current_user)):
         asset_res = supabase.table("assets").select("storage_path").eq("id", user_data["profile_photo_asset_id"]).execute()
         if asset_res.data:
             path = asset_res.data[0]["storage_path"]
-            # Generate signed URL or public URL depending on bucket config
-            # Assuming public bucket for profile photos for now, or use create_signed_url
-            # For now, let's assume we return the public URL if bucket is public
-            # Or generate a signed URL valid for 1 hour
             try:
                 profile_photo_url = supabase.storage.from_(StorageConfig.PROFILE_PHOTOS_BUCKET).get_public_url(path)
             except:
                 pass
+
+    # Get follow counts
+    followers_count = 0
+    following_count = 0
+    try:
+        followers_res = supabase.table("user_follows").select("id", count="exact").eq("following_id", user["id"]).execute()
+        followers_count = followers_res.count or 0
+        following_res = supabase.table("user_follows").select("id", count="exact").eq("follower_id", user["id"]).execute()
+        following_count = following_res.count or 0
+    except:
+        pass
+    
+    # Get thumbnails count (public projects)
+    thumbnails_count = 0
+    try:
+        projects_res = supabase.table("projects").select("id", count="exact").eq("user_id", user["id"]).execute()
+        thumbnails_count = projects_res.count or 0
+    except:
+        pass
 
     return {
         "id": user_data["id"],
@@ -63,7 +89,14 @@ async def get_profile(user: dict = Depends(get_current_user)):
         "profile_photo_url": profile_photo_url,
         "plan": user_data.get("plan", "free"),
         "credits": user_data.get("credits", 0),
-        "created_at": user_data["created_at"]
+        "created_at": user_data["created_at"],
+        "bio": user_data.get("bio"),
+        "website_url": user_data.get("website_url"),
+        "is_public": user_data.get("is_public", True),
+        "is_verified": user_data.get("is_verified", False),
+        "followers_count": followers_count,
+        "following_count": following_count,
+        "thumbnails_count": thumbnails_count
     }
 
 @router.put("/", response_model=ProfileResponse)
@@ -90,6 +123,12 @@ async def update_profile(
         update_data["username"] = profile_update.username
     if profile_update.dob is not None:
         update_data["dob"] = profile_update.dob.isoformat() if profile_update.dob else None
+    if profile_update.bio is not None:
+        update_data["bio"] = profile_update.bio
+    if profile_update.website_url is not None:
+        update_data["website_url"] = profile_update.website_url
+    if profile_update.is_public is not None:
+        update_data["is_public"] = profile_update.is_public
     
     if update_data:
         try:
@@ -113,6 +152,25 @@ async def update_profile(
             except:
                 pass
     
+    # Get follow counts
+    followers_count = 0
+    following_count = 0
+    try:
+        followers_res = supabase.table("user_follows").select("id", count="exact").eq("following_id", user["id"]).execute()
+        followers_count = followers_res.count or 0
+        following_res = supabase.table("user_follows").select("id", count="exact").eq("follower_id", user["id"]).execute()
+        following_count = following_res.count or 0
+    except:
+        pass
+    
+    # Get thumbnails count
+    thumbnails_count = 0
+    try:
+        projects_res = supabase.table("projects").select("id", count="exact").eq("user_id", user["id"]).execute()
+        thumbnails_count = projects_res.count or 0
+    except:
+        pass
+    
     return {
         "id": updated_user["id"],
         "email": updated_user["email"],
@@ -122,7 +180,14 @@ async def update_profile(
         "profile_photo_url": profile_photo_url,
         "plan": updated_user.get("plan", "free"),
         "credits": updated_user.get("credits", 0),
-        "created_at": updated_user["created_at"]
+        "created_at": updated_user["created_at"],
+        "bio": updated_user.get("bio"),
+        "website_url": updated_user.get("website_url"),
+        "is_public": updated_user.get("is_public", True),
+        "is_verified": updated_user.get("is_verified", False),
+        "followers_count": followers_count,
+        "following_count": following_count,
+        "thumbnails_count": thumbnails_count
     }
 
 @router.delete("/", status_code=status.HTTP_204_NO_CONTENT)

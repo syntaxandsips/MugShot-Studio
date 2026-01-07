@@ -21,6 +21,10 @@ export function Header() {
             href: '#',
         },
         {
+            label: 'Download',
+            href: '/download',
+        },
+        {
             label: 'About',
             href: '#',
         },

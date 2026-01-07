@@ -1,4 +1,4 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://mugshot-studio-api.onrender.com';
 
 export interface User {
     id: string;
@@ -130,5 +130,53 @@ export const authApi = {
             const error = await res.json();
             throw new Error(error.detail || 'Failed to delete account');
         }
+    },
+
+    async forgotPassword(email: string): Promise<{ message: string }> {
+        const res = await fetch(`${API_URL}/api/v1/auth/forgot-password`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email }),
+        });
+        if (!res.ok) {
+            const error = await res.json();
+            throw new Error(error.detail || 'Failed to send reset email');
+        }
+        return res.json();
+    },
+
+    async resetPassword(data: { email: string; otp: string; new_password: string }): Promise<void> {
+        const res = await fetch(`${API_URL}/api/v1/auth/reset-password`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data),
+        });
+        if (!res.ok) {
+            const error = await res.json();
+            throw new Error(error.detail || 'Failed to reset password');
+        }
+    },
+
+    async checkUsernameAvailability(username: string): Promise<{ available: boolean }> {
+        const res = await fetch(`${API_URL}/api/v1/auth/check-username/${username}`, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+        });
+        if (!res.ok) {
+            const error = await res.json();
+            throw new Error(error.detail || 'Failed to check username');
+        }
+        return res.json();
+    },
+
+    async logout(token: string): Promise<void> {
+        const res = await fetch(`${API_URL}/api/v1/auth/logout`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+        });
+        if (!res.ok) throw new Error('Failed to logout');
     }
 };

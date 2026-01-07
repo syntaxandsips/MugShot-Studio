@@ -145,40 +145,8 @@ export default function StickyFooter() {
                 whileInView="visible"
                 viewport={{ once: true }}
                 variants={containerVariants}
-                className="bg-gradient-to-br from-[#0a3d40] via-[#0a3d40]/90 to-[#0a3d40] py-6 md:py-12 px-4 md:px-12 min-h-[70vh] w-full flex flex-col justify-between relative overflow-hidden"
+                className="bg-gradient-to-br from-[#0a3d40] via-[#0a3d40] to-[#0a3d40] py-6 md:py-12 px-4 md:px-12 min-h-[70vh] w-full flex flex-col justify-between relative overflow-hidden"
             >
-                {/* Animated Background Elements */}
-
-
-                <motion.div
-                    variants={backgroundVariants}
-                    className="absolute top-0 right-0 w-48 h-48 md:w-96 md:h-96 bg-[#9b896c]/10 rounded-full blur-3xl"
-                    animate={{
-                        scale: [1, 1.1, 1],
-                        opacity: [0.3, 0.6, 0.3],
-                    }}
-                    transition={{
-                        duration: 4,
-                        repeat: Number.POSITIVE_INFINITY,
-                        ease: "easeInOut" as const,
-                    }}
-                />
-
-                <motion.div
-                    variants={backgroundVariants}
-                    className="absolute bottom-0 left-0 w-48 h-48 md:w-96 md:h-96 bg-[#9b896c]/10 rounded-full blur-3xl"
-                    animate={{
-                        scale: [1, 1.2, 1],
-                        opacity: [0.2, 0.5, 0.2],
-                    }}
-                    transition={{
-                        duration: 5,
-                        repeat: Number.POSITIVE_INFINITY,
-                        ease: "easeInOut" as const,
-                        delay: 1,
-                    }}
-                />
-
                 {/* Navigation Section */}
                 <motion.div variants={containerVariants} className="relative z-10">
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-12 lg:gap-20">

@@ -1,10 +1,27 @@
 "use client";
 
 import { useState } from "react";
+import { usePathname } from "next/navigation";
+import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { Home, User, Settings, Bell, Grid, PanelLeftClose, PanelLeftOpen, Search, Edit, Book, LogOut } from "lucide-react";
+import {
+    Home,
+    User,
+    Settings,
+    PanelLeftClose,
+    PanelLeftOpen,
+    Edit,
+    LogOut,
+    LayoutDashboard,
+    FolderKanban,
+    LayoutGrid,
+    Image,
+    Users,
+    CreditCard,
+    Sparkles,
+    Zap
+} from "lucide-react";
 import { cn } from "@/src/lib/utils";
-import { GalleryIcon } from '@/src/components/ui/gallery-icon';
 import { useAuth } from "@/src/context/auth-context";
 import { ProfileModal } from "@/src/components/ui/profile-modal";
 import {
@@ -18,7 +35,7 @@ import {
 
 const Sidebar = ({ children }: { children?: React.ReactNode }) => {
     const [isMobileOpen, setIsMobileOpen] = useState(false);
-    const [isCollapsed, setIsCollapsed] = useState(false);
+    const [isCollapsed, setIsCollapsed] = useState(true);
 
     const toggleMobileSidebar = () => setIsMobileOpen(!isMobileOpen);
     const toggleCollapse = () => setIsCollapsed(!isCollapsed);
@@ -51,7 +68,7 @@ const Sidebar = ({ children }: { children?: React.ReactNode }) => {
                         transition={{ type: "spring", bounce: 0, duration: 0.4 }}
                         className="md:hidden fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-200"
                     >
-                        <SidebarContent isCollapsed={false} />
+                        <SidebarContent isCollapsed={false} onNavigate={() => setIsMobileOpen(false)} />
                     </motion.div>
                 )}
             </AnimatePresence>
@@ -64,7 +81,11 @@ const Sidebar = ({ children }: { children?: React.ReactNode }) => {
                 )}
             >
                 <div className="flex items-center justify-between p-4 h-16 border-b border-gray-100">
-                    {!isCollapsed && <span className="font-bold text-lg truncate" style={{ color: '#0f7d70', fontFamily: 'Silver Garden, sans-serif' }}>MugShot Studio</span>}
+                    {!isCollapsed && (
+                        <Link href="/dashboard" className="font-bold text-lg truncate" style={{ color: '#0f7d70', fontFamily: 'Silver Garden, sans-serif' }}>
+                            MugShot Studio
+                        </Link>
+                    )}
                     <button
                         onClick={toggleCollapse}
                         className="p-2 hover:bg-gray-100 rounded-lg transition-colors ml-auto"
@@ -80,11 +101,13 @@ const Sidebar = ({ children }: { children?: React.ReactNode }) => {
             {/* Main Content */}
             <div className={cn("flex-1 flex flex-col min-h-screen transition-all duration-300 ease-in-out", mainContentMargin)}>
                 {/* Mobile Header */}
-                <div className="md:hidden flex items-center p-4 border-b border-gray-200 bg-white sticky top-0 z-20">
-                    <button onClick={toggleMobileSidebar} className="p-2 -ml-2 hover:bg-gray-100 rounded-lg">
-                        <PanelLeftOpen size={24} className="text-black" />
-                    </button>
-                    <span className="ml-2 font-bold" style={{ color: '#0f7d70', fontFamily: 'Silver Garden, sans-serif' }}>MugShot Studio</span>
+                <div className="md:hidden flex items-center justify-between p-4 border-b border-gray-200 bg-white sticky top-0 z-20">
+                    <div className="flex items-center">
+                        <button onClick={toggleMobileSidebar} className="p-2 -ml-2 hover:bg-gray-100 rounded-lg">
+                            <PanelLeftOpen size={24} className="text-black" />
+                        </button>
+                        <span className="ml-2 font-bold" style={{ color: '#0f7d70', fontFamily: 'Silver Garden, sans-serif' }}>MugShot Studio</span>
+                    </div>
                 </div>
                 <main className="flex-1 relative">
                     {children}
@@ -94,33 +117,107 @@ const Sidebar = ({ children }: { children?: React.ReactNode }) => {
     );
 };
 
-const SidebarContent = ({ isCollapsed }: { isCollapsed: boolean }) => {
+const SidebarContent = ({ isCollapsed, onNavigate }: { isCollapsed: boolean; onNavigate?: () => void }) => {
     const { user, logout } = useAuth();
+    const pathname = usePathname();
     const [profileModalOpen, setProfileModalOpen] = useState(false);
+
+    const mainNavItems = [
+        { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard" },
+        { icon: Edit, label: "Create", href: "/chat", highlight: true },
+    ];
+
+    const manageNavItems = [
+        { icon: FolderKanban, label: "My Projects", href: "/dashboard/projects" },
+        { icon: LayoutGrid, label: "Templates", href: "/dashboard/templates" },
+        { icon: Image, label: "Assets", href: "/dashboard/assets" },
+    ];
+
+    const socialNavItems = [
+        { icon: Users, label: "Community", href: "/community" },
+    ];
+
+    const accountNavItems = [
+        { icon: CreditCard, label: "Billing", href: "/dashboard/billing" },
+        { icon: Settings, label: "Settings", href: "/dashboard/settings" },
+    ];
+
+    const isActive = (href: string) => {
+        if (href === "/dashboard") {
+            return pathname === "/dashboard";
+        }
+        return pathname.startsWith(href);
+    };
+
+    const NavSection = ({ items, title }: { items: typeof mainNavItems; title?: string }) => (
+        <div className="space-y-1">
+            {!isCollapsed && title && (
+                <p className="px-3 text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">{title}</p>
+            )}
+            {items.map((item) => (
+                <SidebarItem
+                    key={item.href}
+                    icon={item.icon}
+                    label={item.label}
+                    href={item.href}
+                    isCollapsed={isCollapsed}
+                    active={isActive(item.href)}
+                    highlight={item.highlight}
+                    onClick={onNavigate}
+                />
+            ))}
+        </div>
+    );
 
     return (
         <div className="flex flex-col h-full py-4">
-            <div className="px-3 mb-6 space-y-1">
-                <SidebarItem icon={Edit} label="New chat" isCollapsed={isCollapsed} />
-                <SidebarItem icon={Search} label="Search chats" isCollapsed={isCollapsed} />
-                <SidebarItem icon={GalleryIcon} label="Library" isCollapsed={isCollapsed} />
+            {/* Main Navigation */}
+            <div className="px-3 space-y-6">
+                <NavSection items={mainNavItems} />
+
+                {!isCollapsed && <div className="border-t border-gray-100" />}
+
+                <NavSection items={manageNavItems} title={!isCollapsed ? "Manage" : undefined} />
+
+                {!isCollapsed && <div className="border-t border-gray-100" />}
+
+                <NavSection items={socialNavItems} title={!isCollapsed ? "Social" : undefined} />
+
+                {!isCollapsed && <div className="border-t border-gray-100" />}
+
+                <NavSection items={accountNavItems} title={!isCollapsed ? "Account" : undefined} />
             </div>
 
-            <div className="flex-1 overflow-y-auto px-3 space-y-1">
+            {/* Credits Display */}
+            {!isCollapsed && user && (
+                <div className="px-3 mt-6">
+                    <Link
+                        href="/dashboard/billing"
+                        className="flex items-center gap-3 p-3 bg-gradient-to-r from-[#0f7d70]/10 to-[#0f7d70]/5 rounded-xl hover:from-[#0f7d70]/15 hover:to-[#0f7d70]/10 transition-colors"
+                    >
+                        <div className="p-2 bg-[#0f7d70] rounded-lg">
+                            <Zap size={16} className="text-white" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                            <p className="text-xs text-gray-500">Credits</p>
+                            <p className="text-sm font-semibold text-[#0f7d70]">{user.credits?.toLocaleString() || 0}</p>
+                        </div>
+                    </Link>
+                </div>
+            )}
 
-            </div>
+            <div className="flex-1" />
 
-            {/* Removed Settings from here since it's accessible through the profile section */}
-            
+            {/* User Profile */}
             <div className="px-3 mt-auto border-t border-gray-100 pt-4">
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                         <div className={cn("flex items-center gap-3 p-2 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer", isCollapsed && "justify-center")}>
-                            <div className="w-8 h-8 rounded-full bg-teal-100 flex items-center justify-center text-teal-700 shrink-0 overflow-hidden">
+                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#0f7d70] to-[#0a5a52] flex items-center justify-center text-white shrink-0 overflow-hidden">
                                 {user?.profile_photo_url ? (
                                     <img src={user.profile_photo_url} alt="Profile" className="w-full h-full object-cover" />
                                 ) : (
-                                    <User size={16} />
+                                    <span className="text-sm font-medium">{user?.full_name?.charAt(0) || user?.username?.charAt(0) || 'U'}</span>
                                 )}
                             </div>
                             {!isCollapsed && (
@@ -131,7 +228,6 @@ const SidebarContent = ({ isCollapsed }: { isCollapsed: boolean }) => {
                             )}
                         </div>
                     </DropdownMenuTrigger>
-                    {/* Updated dropdown menu styling for light mode */}
                     <DropdownMenuContent align="end" className="w-56 bg-white border border-gray-200 text-gray-900" side="top">
                         <DropdownMenuLabel className="text-gray-900">My Account</DropdownMenuLabel>
                         <DropdownMenuSeparator className="bg-gray-200" />
@@ -139,9 +235,17 @@ const SidebarContent = ({ isCollapsed }: { isCollapsed: boolean }) => {
                             <User className="mr-2 h-4 w-4" />
                             <span>Profile</span>
                         </DropdownMenuItem>
-                        <DropdownMenuItem className="text-gray-700 focus:bg-gray-100 focus:text-gray-900">
-                            <Settings className="mr-2 h-4 w-4" />
-                            <span>Settings</span>
+                        <DropdownMenuItem asChild className="text-gray-700 focus:bg-gray-100 focus:text-gray-900">
+                            <Link href="/dashboard/settings">
+                                <Settings className="mr-2 h-4 w-4" />
+                                <span>Settings</span>
+                            </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild className="text-gray-700 focus:bg-gray-100 focus:text-gray-900">
+                            <Link href="/dashboard/billing">
+                                <CreditCard className="mr-2 h-4 w-4" />
+                                <span>Billing</span>
+                            </Link>
                         </DropdownMenuItem>
                         <DropdownMenuSeparator className="bg-gray-200" />
                         <DropdownMenuItem onClick={logout} className="text-red-600 focus:text-red-600 focus:bg-gray-100">
@@ -157,12 +261,28 @@ const SidebarContent = ({ isCollapsed }: { isCollapsed: boolean }) => {
     );
 };
 
-const SidebarItem = ({ icon: Icon, label, isCollapsed, active }: { icon: any, label: string, isCollapsed: boolean, active?: boolean }) => {
+interface SidebarItemProps {
+    icon: any;
+    label: string;
+    href: string;
+    isCollapsed: boolean;
+    active?: boolean;
+    highlight?: boolean;
+    onClick?: () => void;
+}
+
+const SidebarItem = ({ icon: Icon, label, href, isCollapsed, active, highlight, onClick }: SidebarItemProps) => {
     return (
-        <button
+        <Link
+            href={href}
+            onClick={onClick}
             className={cn(
-                "w-full flex items-center gap-3 p-2 rounded-lg transition-colors group relative",
-                active ? "bg-gray-100 text-teal-700" : "text-gray-600 hover:bg-gray-50 hover:text-gray-900",
+                "w-full flex items-center gap-3 p-2.5 rounded-lg transition-all group relative",
+                active
+                    ? "bg-[#0f7d70]/10 text-[#0f7d70]"
+                    : highlight
+                        ? "bg-[#0f7d70] text-white hover:bg-[#0c6a61] shadow-lg shadow-[#0f7d70]/20"
+                        : "text-gray-600 hover:bg-gray-50 hover:text-gray-900",
                 isCollapsed && "justify-center"
             )}
             title={isCollapsed ? label : undefined}
@@ -178,7 +298,7 @@ const SidebarItem = ({ icon: Icon, label, isCollapsed, active }: { icon: any, la
                     {label}
                 </div>
             )}
-        </button>
+        </Link>
     );
 };
 

@@ -1,4 +1,4 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://mugshot-studio-api.onrender.com';
+const API_URL = process.env.NODE_ENV === 'development' ? '' : (process.env.NEXT_PUBLIC_API_URL || 'https://mugshot-studio-api.onrender.com');
 
 export interface User {
     id: string;
@@ -7,6 +7,8 @@ export interface User {
     full_name?: string;
     dob?: string;
     profile_photo_url?: string;
+    bio?: string;
+    website?: string;
     plan: string;
     credits: number;
     created_at: string;
@@ -178,5 +180,141 @@ export const authApi = {
             },
         });
         if (!res.ok) throw new Error('Failed to logout');
-    }
+    },
+
+    async getSessions(token: string): Promise<{ id: string; device: string; ip_address: string; last_active: string; is_current: boolean }[]> {
+        const res = await fetch(`${API_URL}/api/v1/auth/sessions`, {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+        });
+        if (!res.ok) throw new Error('Failed to fetch sessions');
+        return res.json();
+    },
+
+    async updateProfilePhoto(token: string, file: File): Promise<{ message: string; url: string }> {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const res = await fetch(`${API_URL}/api/v1/profile/avatar`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+            },
+            body: formData,
+        });
+        if (!res.ok) {
+            const error = await res.json();
+            throw new Error(error.detail || 'Failed to upload profile photo');
+        }
+        return res.json();
+    },
+
+    async changePassword(token: string, currentPassword: string, newPassword: string): Promise<void> {
+        const res = await fetch(`${API_URL}/api/v1/auth/change-password`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ current_password: currentPassword, new_password: newPassword }),
+        });
+        if (!res.ok) {
+            const error = await res.json();
+            throw new Error(error.detail || 'Failed to change password');
+        }
+    },
+
+    async revokeSession(token: string, sessionId: string): Promise<void> {
+        const res = await fetch(`${API_URL}/api/v1/auth/sessions/${sessionId}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+        });
+        if (!res.ok) throw new Error('Failed to revoke session');
+    },
+
+    async revokeAllSessions(token: string): Promise<void> {
+        const res = await fetch(`${API_URL}/api/v1/auth/sessions`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+        });
+        if (!res.ok) throw new Error('Failed to revoke all sessions');
+    },
+
+    async signinOtp(email: string, redirectTo?: string): Promise<{ message: string }> {
+        const res = await fetch(`${API_URL}/api/v1/auth/signin-otp`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, redirectTo }),
+        });
+        if (!res.ok) {
+            const error = await res.json();
+            throw new Error(error.detail || 'Failed to send OTP');
+        }
+        return res.json();
+    },
+
+    async verifyOtp(email: string, token: string, type: string = 'email'): Promise<AuthResponse> {
+        const res = await fetch(`${API_URL}/api/v1/auth/verify-otp`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, token, type }),
+        });
+        if (!res.ok) {
+            const error = await res.json();
+            throw new Error(error.detail || 'Failed to verify OTP');
+        }
+        return res.json();
+    },
+
+    async resendConfirmation(email: string, redirectTo?: string): Promise<{ message: string }> {
+        const res = await fetch(`${API_URL}/api/v1/auth/resend-confirmation`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, redirectTo }),
+        });
+        if (!res.ok) {
+            const error = await res.json();
+            throw new Error(error.detail || 'Failed to resend confirmation');
+        }
+        return res.json();
+    },
+
+    async changeEmail(token: string, newEmail: string): Promise<{ message: string }> {
+        const res = await fetch(`${API_URL}/api/v1/auth/change-email`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ new_email: newEmail }),
+        });
+        if (!res.ok) {
+            const error = await res.json();
+            throw new Error(error.detail || 'Failed to change email');
+        }
+        return res.json();
+    },
+
+    async registerPushToken(token: string, pushToken: string, platform: 'ios' | 'android' | 'web'): Promise<void> {
+        const res = await fetch(`${API_URL}/api/v1/users/push-token`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ push_token: pushToken, platform }),
+        });
+        if (!res.ok) {
+            const error = await res.json();
+            throw new Error(error.detail || 'Failed to register push token');
+        }
+    },
 };

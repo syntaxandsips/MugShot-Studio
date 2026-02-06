@@ -3,7 +3,7 @@
 /* eslint-disable @typescript-eslint/no-confusing-non-null-assertion */
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Modal, ModalContent } from '@/src/components/ui/modal';
+import { Modal, ModalContent, ModalTitle, ModalDescription } from '@/src/components/ui/modal';
 import Link from 'next/link';
 import { Button } from '@/src/components/ui/button';
 import { Input } from '@/src/components/ui/input';
@@ -29,14 +29,14 @@ type AuthTab = 'login' | 'signup';
 export function AuthModal(props: AuthModalProps) {
     const router = useRouter();
     const { login } = useAuth();
-    
+
     const [activeTab, setActiveTab] = useState<AuthModeTab>('login');
     const [step, setStep] = useState<AuthStep>('email');
     const [isLoading, setIsLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [rememberMe, setRememberMe] = useState(false);
-    
+
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
@@ -44,14 +44,14 @@ export function AuthModal(props: AuthModalProps) {
     const [fullName, setFullName] = useState('');
     const [dob, setDob] = useState('');
     const [otp, setOtp] = useState('');
-    
+
     const [toastVisible, setToastVisible] = useState(false);
     const [toastMessage, setToastMessage] = useState('');
     const [toastType, setToastType] = useState<'success' | 'error'>('success');
-    
+
     const [usernameChecking, setUsernameChecking] = useState(false);
     const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
-    
+
     const emailInputRef = useRef<HTMLInputElement>(null);
     const usernameInputRef = useRef<HTMLInputElement>(null);
     const passwordInputRef = useRef<HTMLInputElement>(null);
@@ -347,6 +347,10 @@ export function AuthModal(props: AuthModalProps) {
                     className: "bg-white shadow-xl rounded-t-xl max-h-[90vh] overflow-y-auto"
                 }}
             >
+                <ModalTitle className="sr-only">Authentication</ModalTitle>
+                <ModalDescription className="sr-only">
+                    Sign in or create an account to access MugShot Studio.
+                </ModalDescription>
                 <div className="flex flex-col min-h-[0] max-h-[90vh] overflow-hidden">
                     <div className="p-6 md:p-8 overflow-y-auto min-h-0">
                         <div className="flex justify-between items-center mb-6">
@@ -366,21 +370,19 @@ export function AuthModal(props: AuthModalProps) {
                             <div className="flex gap-1 p-1 bg-gray-100 rounded-xl mb-6">
                                 <button
                                     onClick={() => handleTabChange('login')}
-                                    className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-all duration-200 ${
-                                        activeTab === 'login'
-                                            ? 'bg-white text-[#0f7d70] shadow-md'
-                                            : 'text-gray-600 hover:text-gray-900'
-                                    }`}
+                                    className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-all duration-200 ${activeTab === 'login'
+                                        ? 'bg-white text-[#0f7d70] shadow-md'
+                                        : 'text-gray-600 hover:text-gray-900'
+                                        }`}
                                 >
                                     Login
                                 </button>
                                 <button
                                     onClick={() => handleTabChange('signup')}
-                                    className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-all duration-200 ${
-                                        activeTab === 'signup'
-                                            ? 'bg-white text-[#0f7d70] shadow-md'
-                                            : 'text-gray-600 hover:text-gray-900'
-                                    }`}
+                                    className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-all duration-200 ${activeTab === 'signup'
+                                        ? 'bg-white text-[#0f7d70] shadow-md'
+                                        : 'text-gray-600 hover:text-gray-900'
+                                        }`}
                                 >
                                     Sign Up
                                 </button>

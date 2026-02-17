@@ -173,7 +173,7 @@ export default function SettingsPage() {
         try {
             const token = localStorage.getItem('access_token');
             if (!token) return;
-            await authApi.changePassword(token, passwords.current, passwords.new);
+            await authApi.changePassword(token, passwords.current, passwords.new, passwords.confirm);
             setPasswords({ current: '', new: '', confirm: '' });
             toast({ title: 'Password changed', description: 'Your password has been updated.' });
         } catch (error) {

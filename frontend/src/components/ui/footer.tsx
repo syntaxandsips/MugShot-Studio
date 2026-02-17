@@ -62,7 +62,7 @@ const backgroundVariants = {
 // Footer data for better maintainability
 const footerData = {
     sections: [
-        { title: "Product", links: ["Features", "Pricing", "Templates", "AI Models"] },
+        { title: "Product", links: ["Templates", "AI Models"] },
         { title: "Company", links: ["About", "Careers", "Contact", "Blog"] },
         { title: "Resources", links: ["Documentation", "Support", "API", "Community"] },
         { title: "Legal", links: ["Privacy", "Terms", "Cookies", "Licenses"] },
@@ -84,7 +84,7 @@ const NavSection = ({ title, links, index }: { title: string; links: string[]; i
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 + index * 0.1, duration: 0.5 }}
-            className="mb-2 uppercase text-[#9b896c]/60 text-xs font-semibold tracking-wider border-b border-[#9b896c]/20 pb-1"
+            className="mb-2 uppercase text-white/60 text-xs font-semibold tracking-wider border-b border-white/20 pb-1"
         >
             {title}
         </motion.h3>
@@ -98,12 +98,12 @@ const NavSection = ({ title, links, index }: { title: string; links: string[]; i
                     x: 8,
                     transition: { type: "spring" as const, stiffness: 300, damping: 20 },
                 }}
-                className="text-[#9b896c]/80 hover:text-[#9b896c] transition-colors duration-300 font-sans text-xs md:text-sm group relative"
+                className="text-white/80 hover:text-white transition-colors duration-300 font-sans text-xs md:text-sm group relative"
             >
                 <span className="relative">
                     {link}
                     <motion.span
-                        className="absolute bottom-0 left-0 h-0.5 bg-[#9b896c]"
+                        className="absolute bottom-0 left-0 h-0.5 bg-white"
                         initial={{ width: 0 }}
                         whileHover={{ width: "100%" }}
                         transition={{ duration: 0.3 }}
@@ -125,11 +125,11 @@ const SocialLink = ({ href, label, icon, index }: { href: string; label: string;
             transition: { type: "spring" as const, stiffness: 300, damping: 15 },
         }}
         whileTap={{ scale: 0.9 }}
-        className="w-6 h-6 md:w-8 md:h-8 rounded-full bg-[#9b896c]/20 hover:bg-[#9b896c] flex items-center justify-center transition-colors duration-300 group"
+        className="w-6 h-6 md:w-8 md:h-8 rounded-full bg-white/10 hover:bg-white flex items-center justify-center transition-colors duration-300 group"
         aria-label={label}
     >
         <motion.span
-            className="text-xs md:text-sm font-bold text-[#9b896c] group-hover:text-[#0a3d40]"
+            className="text-xs md:text-sm font-bold text-white group-hover:text-[#0a3d40]"
             whileHover={{ scale: 1.1 }}
         >
             {icon}
@@ -145,7 +145,7 @@ export default function StickyFooter() {
                 whileInView="visible"
                 viewport={{ once: true }}
                 variants={containerVariants}
-                className="bg-gradient-to-br from-[#0a3d40] via-[#0a3d40] to-[#0a3d40] py-6 md:py-12 px-4 md:px-12 min-h-[70vh] w-full flex flex-col justify-between relative overflow-hidden"
+                className="bg-[#0a3d40] py-6 md:py-12 px-4 md:px-12 min-h-[70vh] w-full flex flex-col justify-between relative overflow-hidden"
             >
                 {/* Navigation Section */}
                 <motion.div variants={containerVariants} className="relative z-10">
@@ -174,7 +174,7 @@ export default function StickyFooter() {
                                 scale: 1.02,
                                 transition: { type: "spring" as const, stiffness: 300, damping: 20 },
                             }}
-                            className="text-[12vw] md:text-[10vw] lg:text-[8vw] xl:text-[6vw] leading-[0.8] font-serif text-[#9b896c] cursor-default"
+                            className="text-[12vw] md:text-[10vw] lg:text-[8vw] xl:text-[6vw] leading-[0.8] font-serif text-white cursor-default"
                         >
                             {footerData.title}
                         </motion.h1>
@@ -187,7 +187,7 @@ export default function StickyFooter() {
                             className="flex items-center gap-3 md:gap-4 mt-3 md:mt-4"
                         >
                             <motion.div
-                                className="w-8 md:w-12 h-0.5 bg-[#9b896c]"
+                                className="w-8 md:w-12 h-0.5 bg-white"
                                 animate={{
                                     scaleX: [1, 1.2, 1],
                                 }}
@@ -202,7 +202,7 @@ export default function StickyFooter() {
                                 whileInView={{ opacity: 1 }}
                                 viewport={{ once: true }}
                                 transition={{ delay: 1.4, duration: 0.5 }}
-                                className="text-[#9b896c]/80 text-xs md:text-sm font-sans"
+                                className="text-white/80 text-xs md:text-sm font-sans"
                             >
                                 {footerData.subtitle}
                             </motion.p>
@@ -221,7 +221,7 @@ export default function StickyFooter() {
                             whileInView={{ opacity: 1 }}
                             viewport={{ once: true }}
                             transition={{ delay: 1.8, duration: 0.5 }}
-                            className="text-[#9b896c]/80 text-xs md:text-sm mb-2 md:mb-3"
+                            className="text-white/80 text-xs md:text-sm mb-2 md:mb-3"
                         >
                             {footerData.copyright}
                         </motion.p>

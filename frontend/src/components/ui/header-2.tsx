@@ -15,8 +15,6 @@ export function Header() {
     const router = useRouter();
 
     const links = [
-        { label: 'Features', href: '#' },
-        { label: 'Pricing', href: '#' },
         { label: 'Blogspace', href: '/blogspace' },
         { label: 'Download', href: '/download' },
         { label: 'About', href: '#' },
@@ -37,7 +35,7 @@ export function Header() {
         if (isAuthenticated) {
             router.push('/dashboard');
         } else {
-            router.push('/login');
+            router.push('/auth/signin');
         }
     };
 

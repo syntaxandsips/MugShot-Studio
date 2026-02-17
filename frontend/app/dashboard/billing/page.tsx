@@ -378,7 +378,7 @@ export default function BillingPage() {
                                     <div className="text-center mb-6">
                                         <h3 className="text-xl font-bold text-gray-900">{plan.name}</h3>
                                         <div className="mt-4">
-                                            <span className="text-4xl font-bold text-gray-900">${plan.price}</span>
+                                            <span className="text-4xl font-bold text-gray-900">${plan.price_monthly}</span>
                                             <span className="text-gray-500">/month</span>
                                         </div>
                                         <p className="text-sm text-[#0f7d70] font-medium mt-2">

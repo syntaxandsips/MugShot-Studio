@@ -147,7 +147,7 @@ export const authApi = {
         return res.json();
     },
 
-    async resetPassword(data: { email: string; otp: string; new_password: string }): Promise<void> {
+    async resetPassword(data: { email: string; token: string; newPassword: string; confirmPassword: string }): Promise<void> {
         const res = await fetch(`${API_URL}/api/v1/auth/reset-password`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -211,14 +211,14 @@ export const authApi = {
         return res.json();
     },
 
-    async changePassword(token: string, currentPassword: string, newPassword: string): Promise<void> {
+    async changePassword(token: string, currentPassword: string, newPassword: string, confirmPassword: string): Promise<void> {
         const res = await fetch(`${API_URL}/api/v1/auth/change-password`, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ current_password: currentPassword, new_password: newPassword }),
+            body: JSON.stringify({ currentPassword, newPassword, confirmPassword }),
         });
         if (!res.ok) {
             const error = await res.json();
@@ -238,7 +238,7 @@ export const authApi = {
     },
 
     async revokeAllSessions(token: string): Promise<void> {
-        const res = await fetch(`${API_URL}/api/v1/auth/sessions`, {
+        const res = await fetch(`${API_URL}/api/v1/auth/sessions/all`, {
             method: 'DELETE',
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -287,14 +287,14 @@ export const authApi = {
         return res.json();
     },
 
-    async changeEmail(token: string, newEmail: string): Promise<{ message: string }> {
+    async changeEmail(token: string, newEmail: string, password: string): Promise<{ message: string }> {
         const res = await fetch(`${API_URL}/api/v1/auth/change-email`, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ new_email: newEmail }),
+            body: JSON.stringify({ newEmail, password }),
         });
         if (!res.ok) {
             const error = await res.json();

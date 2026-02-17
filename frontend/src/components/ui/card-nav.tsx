@@ -147,7 +147,7 @@ const CardNav = ({
 
     return (
         <div className={`card-nav-container ${className}`}>
-            <nav ref={navRef} className={`card-nav ${isExpanded ? 'open' : ''}`} style={{ backgroundColor: baseColor }}>
+            <nav ref={navRef} className={`card-nav ${isExpanded ? 'open' : ''}`} style={{ backgroundColor: baseColor, color: menuColor }}>
                 <div className="card-nav-top">
                     <div
                         className={`hamburger-menu ${isHamburgerOpen ? 'open' : ''}`}
@@ -170,7 +170,7 @@ const CardNav = ({
                         type="button"
                         className="card-nav-cta-button"
                         style={{ backgroundColor: buttonBgColor, color: buttonTextColor }}
-                        onClick={() => window.location.href = '/login'}
+                        onClick={() => window.location.href = '/auth/signin'}
                     >
                         Get Started
                     </button>

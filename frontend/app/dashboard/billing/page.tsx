@@ -382,7 +382,7 @@ export default function BillingPage() {
                                             <span className="text-gray-500">/month</span>
                                         </div>
                                         <p className="text-sm text-[#0f7d70] font-medium mt-2">
-                                            {plan.credits.toLocaleString()} credits/month
+                                            {plan.credits_per_month.toLocaleString()} credits/month
                                         </p>
                                     </div>
 

@@ -16,7 +16,6 @@ type FREQUENCY = 'monthly' | 'yearly';
 const frequencies: FREQUENCY[] = ['monthly', 'yearly'];
 
 export interface Plan {
-    id?: string;
     name: string;
     info: string;
     price: {
@@ -26,7 +25,6 @@ export interface Plan {
     features: {
         text: string;
         tooltip?: string;
-        limit?: string;
     }[];
     btn: {
         text: string;
@@ -151,19 +149,19 @@ export function PricingCard({
             )}
             <div
                 className={cn(
-                    'bg-muted/20 rounded-t-lg border-b p-4',
-                    plan.highlighted && 'bg-muted/40',
+                    'bg-card rounded-t-lg border-b p-4',
+                    plan.highlighted && 'border-primary/20 bg-primary/5',
                 )}
             >
                 <div className="absolute top-2 right-2 z-10 flex items-center gap-2">
                     {plan.highlighted && (
-                        <p className="bg-background flex items-center gap-1 rounded-md border px-2 py-0.5 text-xs">
+                        <p className="bg-primary text-primary-foreground flex items-center gap-1 rounded-md px-2 py-0.5 text-xs">
                             <StarIcon className="h-3 w-3 fill-current" />
                             Popular
                         </p>
                     )}
                     {frequency === 'yearly' && (
-                        <p className="bg-primary text-primary-foreground flex items-center gap-1 rounded-md border px-2 py-0.5 text-xs">
+                        <p className="bg-emerald-500 text-white flex items-center gap-1 rounded-md px-2 py-0.5 text-xs">
                             {Math.round(
                                 ((plan.price.monthly * 12 - plan.price.yearly) /
                                     plan.price.monthly /
@@ -175,10 +173,10 @@ export function PricingCard({
                     )}
                 </div>
 
-                <div className="text-lg font-medium">{plan.name}</div>
+                <div className="text-lg font-medium text-foreground">{plan.name}</div>
                 <p className="text-muted-foreground text-sm font-normal">{plan.info}</p>
                 <h3 className="mt-2 flex items-end gap-1">
-                    <span className="text-3xl font-bold">${plan.price[frequency]}</span>
+                    <span className="text-3xl font-bold text-foreground">${plan.price[frequency]}</span>
                     <span className="text-muted-foreground">
                         {plan.name !== 'Free'
                             ? '/' + (frequency === 'monthly' ? 'month' : 'year')
@@ -188,20 +186,21 @@ export function PricingCard({
             </div>
             <div
                 className={cn(
-                    'text-muted-foreground space-y-4 px-4 py-6 text-sm',
-                    plan.highlighted && 'bg-muted/10',
+                    'text-foreground space-y-4 px-4 py-6 text-sm bg-card',
+                    plan.highlighted && 'bg-primary/5',
                 )}
             >
                 {plan.features.map((feature, index) => (
                     <div key={index} className="flex items-center gap-2">
-                        <CheckCircleIcon className="text-foreground h-4 w-4" />
+                        <CheckCircleIcon className="text-primary h-4 w-4" />
                         <TooltipProvider>
                             <Tooltip delayDuration={0}>
                                 <TooltipTrigger asChild>
                                     <p
                                         className={cn(
+                                            'font-medium',
                                             feature.tooltip &&
-                                            'cursor-pointer border-b border-dashed',
+                                            'cursor-pointer border-b border-dashed border-gray-400',
                                         )}
                                     >
                                         {feature.text}
@@ -219,8 +218,8 @@ export function PricingCard({
             </div>
             <div
                 className={cn(
-                    'mt-auto w-full border-t p-3',
-                    plan.highlighted && 'bg-muted/40',
+                    'mt-auto w-full border-t p-3 bg-card rounded-b-lg',
+                    plan.highlighted && 'bg-primary/5 border-primary/20',
                 )}
             >
                 <Button
@@ -253,11 +252,11 @@ export function BorderTrail({
     onAnimationComplete,
     style,
 }: BorderTrailProps) {
-    const BASE_TRANSITION = {
+    const BASE_TRANSITION: Transition = {
         repeat: Infinity,
         duration: 5,
         ease: 'linear',
-    } as const;
+    };
 
     return (
         <div className='pointer-events-none absolute inset-0 rounded-[inherit] border border-transparent [mask-clip:padding-box,border-box] [mask-composite:intersect] [mask-image:linear-gradient(transparent,transparent),linear-gradient(#000,#000)]'>

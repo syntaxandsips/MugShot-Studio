@@ -5,13 +5,15 @@ import backgroundImg from "./assets/background.webp";
 import CardNav from "@/src/components/ui/card-nav";
 import { HeroPill } from "@/src/components/ui/hero-pill";
 import { AI_Prompt } from "@/src/components/ui/animated-ai-input";
-import { LogoCarousel, allLogos } from "@/src/components/ui/logo-carousel";
-import { GradientHeading } from "@/src/components/ui/gradient-heading";
-import { GridFeatureCards } from "@/src/components/ui/grid-feature-cards";
-import { InteractiveImageAccordion } from "@/src/components/ui/interactive-image-accordion";
+import { Marquee } from "@/src/components/ui/marquee";
+import { allLogos } from "@/src/components/ui/logo-carousel";
+import RuixenSection from "@/src/components/ui/ruixen-feature-section";
 import { PricingSection } from "@/src/components/ui/pricing";
 import { FAQSection } from "@/src/components/ui/faq-tabs";
 import StickyFooter from "@/src/components/ui/footer";
+import { useState, useEffect } from "react";
+import { billingApi, SubscriptionPlan } from "@/src/lib/api";
+import { Plan } from "@/src/components/ui/pricing";
 
 export default function Home() {
 
@@ -22,7 +24,7 @@ export default function Home() {
       textColor: "#fff",
       links: [
         { label: "Features", ariaLabel: "Features", href: "#" },
-        { label: "Pricing", ariaLabel: "Pricing", href: "#" },
+        { label: "Pricing", ariaLabel: "Pricing", href: "#pricing" },
         { label: "Download", ariaLabel: "Download", href: "/download" }
       ]
     },
@@ -45,6 +47,23 @@ export default function Home() {
       ]
     }
   ];
+
+  const [plans, setPlans] = useState<Plan[]>(DEFAULT_PLANS);
+
+  useEffect(() => {
+    const fetchPlans = async () => {
+      try {
+        const apiPlans = await billingApi.getPlans();
+        if (apiPlans && apiPlans.length > 0) {
+          const transformed = transformPlans(apiPlans);
+          setPlans(transformed);
+        }
+      } catch (error) {
+        console.error("Failed to fetch plans", error);
+      }
+    };
+    fetchPlans();
+  }, []);
 
   return (
     <div className="min-h-screen w-full flex flex-col relative bg-white overflow-x-hidden">
@@ -105,38 +124,28 @@ export default function Home() {
 
         <div className="w-full max-w-5xl mx-auto px-4 pt-20 pb-20 flex flex-col items-center">
           <div className="w-full space-y-8 z-10">
-            <div className="text-center space-y-4">
-              <GradientHeading variant="black" size="sm" weight="base">
-                Powered by leading AI models
-              </GradientHeading>
-            </div>
-            <div className="flex justify-center">
-              <LogoCarousel columnCount={4} logos={allLogos} />
+            <div className="flex justify-center w-full">
+              <Marquee pauseOnHover className="[--duration:20s]">
+                {allLogos.map((logo) => (
+                  <div key={logo.id} className="mx-8 flex items-center justify-center">
+                    <logo.img className="h-24 w-auto opacity-70 grayscale transition-all hover:opacity-100 hover:grayscale-0" />
+                  </div>
+                ))}
+              </Marquee>
             </div>
           </div>
 
           <div className="w-full mt-24 z-10">
-            <div className="text-center mb-10">
-              <h2 className="text-5xl md:text-8xl font-silver mb-4" style={{ color: '#022312' }}>
-                How It Works
-              </h2>
-              <p className="text-lg mt-4" style={{ color: '#022312' }}>
-                How we turn your prompts/images into high-quality Thumbnails.
-              </p>
-            </div>
-            <GridFeatureCards />
+            <RuixenSection />
           </div>
-        </div>
-
-        <div className="w-full mt-24 z-10">
-          <InteractiveImageAccordion />
         </div>
 
         <div className="w-full z-10">
           <PricingSection
-            plans={PLANS}
+            plans={plans}
             heading="Plans that Scale with You"
             description="Whether you're just starting out or growing fast, our flexible pricing has you covered — with no hidden costs."
+            id="pricing"
           />
         </div>
 
@@ -149,7 +158,40 @@ export default function Home() {
   );
 }
 
-const PLANS = [
+function transformPlans(apiPlans: SubscriptionPlan[]): Plan[] {
+  return apiPlans.map(plan => {
+    // Assuming features is just a generic string array from API, we verify if it needs parsing or if it's already compatible
+    return {
+      id: plan.id,
+      name: plan.name,
+      info: getPlanInfo(plan.name) || plan.description,
+      price: {
+        monthly: plan.price_monthly,
+        yearly: plan.price_yearly
+      },
+      features: plan.features.map(f => ({ text: f })),
+      btn: {
+        text: 'Get Started',
+        href: `/login?plan=${plan.id}`
+      },
+      highlighted: plan.is_popular
+    } as Plan;
+  }).sort((a, b) => {
+    // Optional: sort logic if needed, otherwise rely on API order
+    const order = ['Basic', 'Pro', 'Business'];
+    return order.indexOf(a.name) - order.indexOf(b.name);
+  });
+}
+
+function getPlanInfo(name: string): string {
+  const lower = name.toLowerCase();
+  if (lower.includes('basic') || lower.includes('starter')) return 'For most individuals';
+  if (lower.includes('pro') || lower.includes('professional')) return 'For small businesses';
+  if (lower.includes('business') || lower.includes('enterprise')) return 'For large organizations';
+  return 'Flexible plan';
+}
+
+const DEFAULT_PLANS = [
   {
     id: 'basic',
     name: 'Basic',
@@ -177,7 +219,7 @@ const PLANS = [
     ],
     btn: {
       text: 'Start Your Free Trial',
-      href: '#',
+      href: '/login?plan=basic',
     },
   },
   {
@@ -206,7 +248,7 @@ const PLANS = [
     ],
     btn: {
       text: 'Get started',
-      href: '#',
+      href: '/login?plan=pro',
     },
   },
   {
@@ -224,6 +266,7 @@ const PLANS = [
       {
         text: 'SEO optimization tools',
         tooltip: 'Advanced SEO optimization tools',
+        limit: 'Unlimited'
       },
       { text: 'Priority support', tooltip: 'Get 24/7 chat support' },
       {
@@ -233,7 +276,7 @@ const PLANS = [
     ],
     btn: {
       text: 'Contact team',
-      href: '#',
+      href: '/login?plan=business',
     },
   },
 ];

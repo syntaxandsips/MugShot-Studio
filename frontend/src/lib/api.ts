@@ -150,12 +150,14 @@ export interface Notification {
 export interface SubscriptionPlan {
     id: string;
     name: string;
-    price: number;
-    currency: string;
-    interval: 'monthly' | 'yearly';
-    credits: number;
+    description: string;
+    price_monthly: number;
+    price_yearly: number;
+    credits_per_month: number;
     features: string[];
-    is_popular?: boolean;
+    is_active: boolean;
+    display_order: number;
+    is_popular?: boolean; // Kept for frontend convenience if API doesn't provide it, though user said "highlighted" property exists in frontend component
 }
 
 export interface CreditPackage {
